@@ -23,4 +23,4 @@ window.addEventListener("resize", () => {
 
 // center the camera to New York
 mapView.camera.position.set(0, 0, 1600);
-mapView.geoCenter = new GeoCoordinates(40.70398928, -74.01319808, 0);
+mapView.geoCenter = new GeoCoordinates(1.3029095, 103.8494058, 0);
