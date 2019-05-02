@@ -17,6 +17,7 @@ module.exports = [
         devtool: 'source-map',
         externals: {
             three: "THREE",
+            ammo: "Ammo"
         },
         resolve: {
             extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
@@ -40,7 +41,8 @@ module.exports = [
                     to: "resources",
                     toType: "dir"
                 },
-                require.resolve("three/build/three.min.js")
+                require.resolve("three/build/three.min.js"),
+                require.resolve("ammo.js/builds/ammo.js")                
             ])
         ],
         devServer: {

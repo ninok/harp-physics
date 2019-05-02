@@ -184,6 +184,10 @@
   resolved "https://registry.yarnpkg.com/@tweenjs/tween.js/-/tween.js-17.3.0.tgz#1cbea14b4b5baa292274c96766fd1b2a56b7ca9f"
   integrity sha512-SPkhNj9/wGfbdX2C3B3KhttLQ4iesd+Ny8Dv1RnqF1MFUIqsZz/OJVLzJEHSEl7zheNx70dvqrwfbCFDQ0sWBw==
 
+"@types/ammo.js@osman-turan/ammo.js-typings":
+  version "1.0.0"
+  resolved "https://codeload.github.com/osman-turan/ammo.js-typings/tar.gz/1023056920de41fefdd1f44f8331b6fe51e1742f"
+
 "@types/long@^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/long/-/long-4.0.0.tgz#719551d2352d301ac8b81db732acb6bdc28dbdef"
@@ -397,6 +401,10 @@ ajv@^6.1.0:
     fast-json-stable-stringify "^2.0.0"
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
+
+ammo.js@kripken/ammo.js:
+  version "0.0.2"
+  resolved "https://codeload.github.com/kripken/ammo.js/tar.gz/f56d8f76e9d22137ac38383ef5defc62f143be32"
 
 ansi-colors@^3.0.0:
   version "3.2.4"
