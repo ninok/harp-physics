@@ -3,11 +3,11 @@
         "module": "commonjs",
         "target": "es6",
         "lib": [
-            "es2015",
-            "es2015.promise",
+            "es2017",
             "dom"
         ],
-        "sourceMap": true
+        "sourceMap": true,
+        "baseUrl": "../harp.gl/"
     },
     "exclude": [
         "node_modules",
