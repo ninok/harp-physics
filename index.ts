@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { View } from "./View";
 import * as THREE from "three";
-import { MapViewEventNames, RenderEvent } from "@here/harp-mapview";
+import { MapViewEventNames, RenderEvent, TileLoaderState, TileObject, Tile } from "@here/harp-mapview";
+import { OmvDataSource, APIFormat, OmvWithRestClientParams, OmvWithCustomDataProvider, OmvTile } from "@here/harp-omv-datasource";
+import { GeometryType, BufferAttribute } from "@here/harp-datasource-protocol";
 
 
 // Physics variables
@@ -28,6 +30,96 @@ const app = new View({
 
 const mapView = app.mapView;
 
+// center the camera to Singapore
+const singapore = new GeoCoordinates(1.3029095, 103.8494058, 0);
+
+// choose a center for the physics world
+const physicsWorldCenter = mapView.projection.projectPoint(singapore, new THREE.Vector3);
+
+
+class PhysicsDataSource extends OmvDataSource {
+    constructor(params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
+        super(params);
+    }
+
+    getTile(tileKey: TileKey): OmvTile | undefined {
+        const omvTile = super.getTile(tileKey);
+        omvTile.tileLoader.waitSettled().then((value: TileLoaderState) => {
+            if (value !== TileLoaderState.Ready) {
+                return;
+            }
+
+            for (const geometry of omvTile.tileLoader.decodedTile.geometries) {
+                if (geometry.type === GeometryType.ExtrudedPolygon) {
+                    geometry.vertexAttributes.forEach
+                    ((vertexAttribute: BufferAttribute) => {
+                        try {
+                            if (vertexAttribute.name !== "position") {
+                                return;
+                            }
+                            if (vertexAttribute.type !== "float") {
+                                console.log("position vertex attribute needs to be float.");
+                                return;
+                            }
+                            if (geometry.index === undefined) {
+                                console.log("No index buffer defined.");
+                                return;
+                            }
+                            if (geometry.index.type !== "uint32") {
+                                console.log("index buffer needs to be uint32.");
+                                return;
+                            }
+        
+                            const positions = new Float32Array(vertexAttribute.buffer);
+                            const indices = new Uint32Array(geometry.index.buffer);
+
+                            const mesh = new Ammo.btTriangleMesh(true /*use32bitIndices*/ );
+                            for (let i =0; i < indices.length; i+= 3) {
+
+                                const v0 = new Ammo.btVector3(positions[indices[i]*3], positions[indices[i]*3 + 1], positions[indices[i]*3+2]);
+                                const v1 = new Ammo.btVector3(positions[indices[i+1]*3], positions[indices[i+1]*3 + 1], positions[indices[i+1]*3+2]);
+                                const v2 = new Ammo.btVector3(positions[indices[i+2]*3], positions[indices[i+2]*3 + 1], positions[indices[i+2]*3+2]);
+                                mesh.addTriangle(v0, v1, v2);
+                            }                        
+                            const shape = new Ammo.btBvhTriangleMeshShape(mesh,true, true);
+
+                            // Tile origin relative to the center of our physics simulation.
+                            const tileOrigin = omvTile.center.clone().sub(physicsWorldCenter);
+                            console.log(omvTile.center, tileOrigin);
+
+                            var mass = 0; // make it unmoveable
+                            var localInertia = new Ammo.btVector3(0, 0, 0);
+                            shape.calculateLocalInertia(mass, localInertia);
+                            var transform = new Ammo.btTransform();
+                            transform.setIdentity();
+                            transform.setOrigin(new Ammo.btVector3(tileOrigin.x, tileOrigin.y, tileOrigin.z));
+                            var motionState = new Ammo.btDefaultMotionState(transform);
+                            var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
+                            var body = new Ammo.btRigidBody(rbInfo);
+                        
+                            physicsWorld.addRigidBody(body);
+                        } catch (error) {
+                                console.log(error);
+                        }
+
+                    });
+                }
+            }
+
+        });
+        return omvTile;
+    }
+}
+
+const omvDataSource = new PhysicsDataSource({
+    baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+    apiFormat: APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    maxZoomLevel: 17,
+    authenticationCode: "AB5W33i5bYqI2dY_cDYIcG0"
+});
+mapView.addDataSource(omvDataSource);
+
 // make map full-screen
 mapView.resize(window.innerWidth, window.innerHeight);
 
@@ -36,14 +128,10 @@ window.addEventListener("resize", () => {
     mapView.resize(window.innerWidth, window.innerHeight);
 });
 
-// center the camera to Singapore
-const singapore = new GeoCoordinates(1.3029095, 103.8494058, 0);
 
 mapView.camera.position.set(0, 0, 500);
 mapView.geoCenter = singapore.clone();
 
-// choose a center for the physics world
-const physicsWorldCenter = mapView.worldCenter.clone();
 
 mapView.addEventListener(MapViewEventNames.Render, (event: RenderEvent) => {
     updatePhysics(clock.getDelta());
@@ -52,6 +140,12 @@ mapView.addEventListener(MapViewEventNames.Render, (event: RenderEvent) => {
 function animateMap() {
     requestAnimationFrame(() => {
         mapView.update();
+        mapView.visibleTileSet.forEachVisibleTile((tile: Tile) => {
+            tile.objects.forEach((value: TileObject) => {
+                //console.log(value);
+            });
+
+        });
         animateMap();
     });
 }
@@ -126,7 +220,6 @@ function generateObject() {
     if (!mapView) {
         return;
     }
-    console.log("generating object");
     var numTypes = 4;
     var objectType = Math.ceil(Math.random() * numTypes);
 
@@ -171,6 +264,7 @@ function generateObject() {
     }
 
     threeObject.position.set(0, 0, 200);
+    threeObject.position.add(mapView.worldCenter).sub(physicsWorldCenter);
     threeObject.renderOrder = 1000;
 
     var mass = objectSize * 5;
