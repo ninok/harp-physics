@@ -1,7 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyWebpackPlugin = require("copy-webpack-plugin");
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 // this webpack config consists of two generated bundles.
 // 1. The bundle that is loaded in the web worker to do background tasks
@@ -22,7 +21,6 @@ module.exports = [
         },
         resolve: {
             extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
-            plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.json" })]
         },
         module: {
             rules: [
@@ -39,7 +37,7 @@ module.exports = [
             }),
             new CopyWebpackPlugin([
                 {
-                    from: "../harp.gl/@here/harp-map-theme/resources",
+                    from: "node_modules/@here/harp-map-theme/resources",
                     to: "resources",
                     toType: "dir"
                 },
@@ -73,7 +71,6 @@ module.exports = [
         },
         resolve: {
             extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
-            plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.json" })]
         },
         module: {
             rules: [
