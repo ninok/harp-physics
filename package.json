@@ -18,7 +18,7 @@
     "@here/harp-omv-datasource": "^0.4.3",
     "@types/ammo.js": "osman-turan/ammo.js-typings",
     "ammo.js": "kripken/ammo.js",
-    "three": "^0.105.2"
+    "three": "^0.125.0"
   },
   "devDependencies": {
     "@types/tween.js": "^16.9.0",
